@@ -1,7 +1,15 @@
 {
   "dependencies": {
+    "com.bdframework.core": {
+      "version": "file:com.bdframework.core",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.ourpalm.ilruntime": "1.6.7"
+      }
+    },
     "com.ourpalm.ilruntime": {
-      "version": "1.6.5",
+      "version": "1.6.7",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -49,13 +57,6 @@
       },
       "url": "https://packages.unity.cn"
     },
-    "com.unity.scriptablebuildpipeline": {
-      "version": "1.15.2",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.cn"
-    },
     "com.unity.shadergraph": {
       "version": "7.4.3",
       "depth": 1,
@@ -66,7 +67,7 @@
       "url": "https://packages.unity.cn"
     },
     "com.unity.test-framework": {
-      "version": "1.1.22",
+      "version": "1.1.20",
       "depth": 1,
       "source": "registry",
       "dependencies": {
