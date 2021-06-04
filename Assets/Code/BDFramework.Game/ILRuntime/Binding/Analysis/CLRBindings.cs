@@ -7,15 +7,6 @@ namespace ILRuntime.Runtime.Generated
     class CLRBindings
     {
 
-//will auto register in unity
-#if UNITY_5_3_OR_NEWER
-        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.BeforeSceneLoad)]
-#endif
-        static private void RegisterBindingAction()
-        {
-            ILRuntime.Runtime.CLRBinding.CLRBindingUtils.RegisterBindingAction(Initialize);
-        }
-
         internal static ILRuntime.Runtime.Enviorment.ValueTypeBinder<UnityEngine.Vector2> s_UnityEngine_Vector2_Binding_Binder = null;
         internal static ILRuntime.Runtime.Enviorment.ValueTypeBinder<UnityEngine.Vector3> s_UnityEngine_Vector3_Binding_Binder = null;
         internal static ILRuntime.Runtime.Enviorment.ValueTypeBinder<UnityEngine.Vector4> s_UnityEngine_Vector4_Binding_Binder = null;
@@ -131,10 +122,12 @@ namespace ILRuntime.Runtime.Generated
             System_Collections_Generic_List_1_Enum_Binding_Enumerator_Binding.Register(app);
             System_Collections_Generic_Dictionary_2_Int32_ILTypeInstance_Binding_ValueCollection_Binding.Register(app);
             System_Collections_Generic_Dictionary_2_Int32_ILTypeInstance_Binding_ValueCollection_Binding_Enumerator_Binding.Register(app);
+            System_Reflection_MethodInfo_Binding.Register(app);
+            System_Reflection_ParameterInfo_Binding.Register(app);
             System_Collections_Generic_Dictionary_2_Type_Object_Binding.Register(app);
             UnityEngine_Color_Binding.Register(app);
             System_Runtime_CompilerServices_AsyncTaskMethodBuilder_1_ILTypeInstance_Binding.Register(app);
-            System_Collections_Generic_Dictionary_2_Int32_MethodInfo_Binding.Register(app);
+            System_Collections_Generic_Dictionary_2_Type_MethodInfo_Binding.Register(app);
             System_Collections_Generic_Dictionary_2_String_Single_Binding.Register(app);
             System_Collections_Generic_Dictionary_2_String_List_1_Action_1_Single_Binding.Register(app);
             System_Collections_Generic_List_1_Action_1_Single_Binding.Register(app);

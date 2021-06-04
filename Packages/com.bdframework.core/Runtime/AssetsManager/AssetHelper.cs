@@ -127,11 +127,15 @@ namespace BDFramework.AssetHelper
             else
             {
                 //删除persistent下的pdb防止跟dll不匹配
-                File.Delete(persistentDLLPath +".pdb");
+                var pbdPath= persistentDLLPath +".pdb";
+                if(File.Exists(pbdPath))
+                {
+                    File.Delete(pbdPath);
+                }
             }
             //复制Sql
-            var persistentSQLPath = string.Format("{0}/{1}", persistent, SqliteLoder.DBPATH);
-            var  streamingSQLPath =  string.Format("{0}/{1}", streamingAsset, SqliteLoder.DBPATH);
+            var persistentSQLPath = string.Format("{0}/{1}", persistent, SqliteLoder.LOCAL_DB_PATH);
+            var  streamingSQLPath =  string.Format("{0}/{1}", streamingAsset, SqliteLoder.LOCAL_DB_PATH);
             www = new WWW(streamingSQLPath);
             yield return www;
             if (www.error == null)

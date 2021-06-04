@@ -18,7 +18,7 @@ namespace BDFramework.UFlux
     /// <summary>
     /// UI管理类
     /// </summary>
-    public class UIManager : ManagerBase<UIManager, UIAttribute>
+    public partial class UIManager : ManagerBase<UIManager, UIAttribute>
     {
         /// <summary>
         /// UI窗口字典
@@ -57,6 +57,8 @@ namespace BDFramework.UFlux
             //
             var attr = classData.Attribute as UIAttribute;
             var window = Activator.CreateInstance(classData.Type, new object[] {attr.ResourcePath}) as IWindow;
+            //设置DI
+            SetWindowDI(window);
             //
             return window;
         }
@@ -198,24 +200,28 @@ namespace BDFramework.UFlux
             }
         }
 
-        private void PushCaheData(int uiIndex)
+        /// <summary>
+        /// 推送缓存信息
+        /// </summary>
+        /// <param name="uiIdx"></param>
+        private void PushCaheData(int uiIdx)
         {
             // return;
             //检查ui数据缓存
-            List<UIMessageData> cacheList = null;
-            uiDataCacheMap.TryGetValue(uiIndex, out cacheList);
+            List<UIMsgData> cacheList = null;
+            uiDataCacheMap.TryGetValue(uiIdx, out cacheList);
             if (cacheList != null)
             {
                 for (int i = 0; i < cacheList.Count; i++)
                 {
                     var data = cacheList[i];
 
-                    windowMap[uiIndex].SendMessage(data);
-                    BDebug.Log("push cache data " + uiIndex);
+                    windowMap[uiIdx].SendMessage(data);
+                    BDebug.Log("push cache data " + uiIdx);
                 }
 
                 cacheList.Clear();
-                BDebug.LogFormat("推送数据：{0} ,{1}条", uiIndex, cacheList.Count);
+                BDebug.LogFormat("推送数据：{0} ,{1}条", uiIdx, cacheList.Count);
             }
         }
 
@@ -223,10 +229,10 @@ namespace BDFramework.UFlux
         /// <summary>
         /// 卸载窗口
         /// </summary>
-        /// <param name="indexs">窗口枚举</param>
-        public void UnLoadWindows(List<Enum> indexs)
+        /// <param name="idxs">窗口枚举</param>
+        public void UnLoadWindows(List<Enum> idxs)
         {
-            foreach (var i in indexs)
+            foreach (var i in idxs)
             {
                 UnLoadWindow(i);
             }
@@ -273,7 +279,7 @@ namespace BDFramework.UFlux
         /// 显示窗口
         /// </summary>
         /// <param name="uiIndex">窗口枚举</param>
-        public void ShowWindow(Enum index, bool resetMask = true, UILayer layer = UILayer.Bottom)
+        public void ShowWindow(Enum index, UIMsgData uiMsgData=null, bool resetMask = true, UILayer layer = UILayer.Bottom)
         {
             int uiIndex = index.GetHashCode();
             if (windowMap.ContainsKey(uiIndex))
@@ -297,13 +303,15 @@ namespace BDFramework.UFlux
                     }
 
                     v.Transform.SetAsLastSibling();
-                    v.Open();
+                    v.Open(uiMsgData);
                     //effect
                 }
                 else
                 {
                     Debug.LogErrorFormat("UI处于[unload,lock,open]状态之一：{0}", uiIndex);
                 }
+
+                AddToHistory(index.GetHashCode());
             }
             else
             {
@@ -311,7 +319,24 @@ namespace BDFramework.UFlux
             }
         }
 
-
+        /// <summary>
+        /// 历史列表
+        /// </summary>
+        public List<int> HistoryList { get; private set; } = new List<int>();
+        
+        /// <summary>
+        /// 添加到历史
+        /// </summary>
+        /// <param name="idx"></param>
+        private void AddToHistory(int idx)
+        {
+            HistoryList.Add(idx);
+            if (HistoryList.Count > 10)
+            {
+                HistoryList.RemoveAt(0);
+            }
+        }
+        
         /// <summary>
         /// 获取一个窗口
         /// </summary>
@@ -350,14 +375,14 @@ namespace BDFramework.UFlux
             }
         }
 
-        private Dictionary<int, List<UIMessageData>> uiDataCacheMap = new Dictionary<int, List<UIMessageData>>();
+        private Dictionary<int, List<UIMsgData>> uiDataCacheMap = new Dictionary<int, List<UIMsgData>>();
 
         /// <summary>
         /// 外部推送ui数据
         /// </summary>
         /// <param name="uiIndex"></param>
         /// <param name="uiMsg"></param>
-        public void SendMessage(Enum index, UIMessageData uiMsg)
+        public void SendMessage(Enum index, UIMsgData uiMsg)
         {
             var uiIndex = index.GetHashCode();
             IWindow win;
@@ -368,12 +393,12 @@ namespace BDFramework.UFlux
             }
 
             //存入缓存
-            List<UIMessageData> list = null;
+            List<UIMsgData> list = null;
             uiDataCacheMap.TryGetValue(uiIndex, out list);
             //
             if (list == null)
             {
-                list = new List<UIMessageData>();
+                list = new List<UIMsgData>();
                 uiDataCacheMap[uiIndex] = list;
             }
 

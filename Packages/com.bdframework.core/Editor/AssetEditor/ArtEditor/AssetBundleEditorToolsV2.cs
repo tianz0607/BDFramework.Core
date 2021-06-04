@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using BDFramework.Editor.EditorLife;
 using BDFramework.ResourceMgr.V2;
 using UnityEditor;
 using UnityEngine;
@@ -61,7 +60,6 @@ namespace BDFramework.Editor.Asset
             {
                 return this.ReferenceCount > 1;
             }
-            
         }
 
         /// <summary>
@@ -80,15 +78,15 @@ namespace BDFramework.Editor.Asset
             Simple,
             ForceAll
         }
-        
+
         /// <summary>
         /// 设置AB名
         /// </summary>
-        public bool SetABName(string assetName, string newABName ,  ChangeABNameMode mode = ChangeABNameMode.Simple)
+        public bool SetABName(string assetName, string newABName, ChangeABNameMode mode = ChangeABNameMode.Simple)
         {
             //1.如果ab名被修改过,说明有其他规则影响，需要理清打包规则。（比如散图打成图集名）
             //2.如果资源被其他资源引用，修改ab名，需要修改所有引用该ab的名字
-            
+
             //AssetData assetdata = this.AssetDataMaps.
 
 
@@ -138,7 +136,7 @@ namespace BDFramework.Editor.Asset
 
             var buildinfoCahce = JsonMapper.ToJson(newbuildInfo);
             //BD生命周期触发
-            BDFrameEditorBehaviorHelper.OnBeginBuildAssetBundle(newbuildInfo);
+            BDEditorBehaviorHelper.OnBeginBuildAssetBundle(newbuildInfo);
             //获取改动的数据
             var changedBuildInfo = GetChangedAssets(lastBuildInfo, newbuildInfo);
             // newbuildInfo = null; //防止后面再用
@@ -178,33 +176,28 @@ namespace BDFramework.Editor.Asset
                 foreach (var asset in newbuildInfo.AssetDataMaps)
                 {
                     var abname = AssetDatabase.AssetPathToGUID(asset.Value.ABName);
-                    if (!string.IsNullOrEmpty(abname))  //不存在的资源（如ab.shader之类）,则用原名
+                    if (!string.IsNullOrEmpty(abname)) //不存在的资源（如ab.shader之类）,则用原名
                     {
                         asset.Value.ABName = abname;
                     }
                     else
                     {
-                        if(asset.Value.ABName!= "shaders.ab")
                         Debug.LogError("获取GUID失败：" + asset.Value.ABName);
                     }
 
                     for (int i = 0; i < asset.Value.DependList.Count; i++)
                     {
                         var dependAssetName = asset.Value.DependList[i];
-                        
+
                         abname = AssetDatabase.AssetPathToGUID(dependAssetName);
-                        if (!string.IsNullOrEmpty(abname))  //不存在的资源（如ab.shader之类）,则用原名
+                        if (!string.IsNullOrEmpty(abname)) //不存在的资源（如ab.shader之类）,则用原名
                         {
                             asset.Value.DependList[i] = abname;
                         }
                         else
                         {
-                            if (dependAssetName == "shaders.ab")
-                            {
-                                Debug.LogError("获取GUID失败：" + dependAssetName);
-                            }
+                            Debug.LogError("获取GUID失败：" + dependAssetName);
                         }
-                        
                     }
                 }
             }
@@ -254,6 +247,7 @@ namespace BDFramework.Editor.Asset
 
 
             #region 生成Runtime使用的Config
+
             //根据buildinfo 生成加载用的 Config
             //1.只保留Runtime目录下的配置
             ManifestConfig config = new ManifestConfig();
@@ -274,7 +268,7 @@ namespace BDFramework.Editor.Asset
                     }
                     else
                     {
-                        key = key.Substring(index + 1);  // 保留runtime
+                        key = key.Substring(index + 1); // 保留runtime
                     }
 
                     var exten = Path.GetExtension(key);
@@ -282,16 +276,18 @@ namespace BDFramework.Editor.Asset
                     {
                         key = key.Replace(exten, "");
                     }
+
                     //添加manifest
                     var mi = new ManifestItem(item.Value.ABName, (ManifestItem.AssetTypeEnum) item.Value.Type,
                         new List<string>(item.Value.DependList));
                     config.ManifestMap[key] = mi;
                 }
             }
-          
+
 
             //写入
             FileHelper.WriteAllText(artOutputPath + "/Config.json", JsonMapper.ToJson(config));
+
             #endregion
 
 
@@ -341,7 +337,7 @@ namespace BDFramework.Editor.Asset
                     File.Delete(df);
                 }
             }
-            
+
             //the end. BuildInfo写入
             if (File.Exists(buildInfoPath))
             {
@@ -349,10 +345,11 @@ namespace BDFramework.Editor.Asset
                 File.Delete(targetPath);
                 File.Move(buildInfoPath, targetPath);
             }
+
             FileHelper.WriteAllText(buildInfoPath, buildinfoCahce);
 
             //BD生命周期触发
-            BDFrameEditorBehaviorHelper.OnEndBuildAssetBundle(outputPath);
+            BDEditorBehaviorHelper.OnEndBuildAssetBundle(outputPath);
             AssetHelper.AssetHelper.GenPackageBuildInfo(outputPath, platform);
 
             return true;
@@ -371,7 +368,6 @@ namespace BDFramework.Editor.Asset
         }
 
 
-        static public string ALLSHADERS = "shaders.ab";
         /// <summary>
         /// 包配置相关
         /// </summary>
@@ -379,8 +375,8 @@ namespace BDFramework.Editor.Asset
         {
             new MakePackage()
             {
-                FileExtens = new List<string>() {".mat", ".shader", ".shadervariants"},
-                AssetBundleName =ALLSHADERS
+                FileExtens = new List<string>() {".shader", ".shadervariants"},
+                AssetBundleName =  ShaderCollection.ALL_SHADER_VARAINT_PATH.Replace(".shadervariants","")
             }
         };
 
@@ -677,10 +673,7 @@ namespace BDFramework.Editor.Asset
                 AssetImpoterCacheMap[path] = ai;
                 if (!ai)
                 {
-                    if (path != ALLSHADERS)
-                    {
-                        Debug.LogError("【打包】获取资源失败:" + path);
-                    }
+                    Debug.LogError("【打包】获取资源失败:" + path);
                 }
             }
 

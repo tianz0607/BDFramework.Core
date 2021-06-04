@@ -4,7 +4,6 @@ using UnityEngine;
 using System.IO;
 using BDFramework.Editor.Asset;
 using BDFramework.Editor.BuildPackage;
-using BDFramework.Editor.EditorLife;
 using BDFramework.Core.Tools;
 using BDFramework.Editor;
 using UnityEditor.SceneManagement;
@@ -30,7 +29,7 @@ namespace BDFramework.Editor
         static EditorBuildPackage()
         {
             //初始化框架编辑器下
-            BDFrameEditorLife.InitEditorFrame();
+            BDFrameEditorLife.InitBDFrameworkEditor();
         }
         
 
@@ -131,18 +130,21 @@ namespace BDFramework.Editor
         static public void BuildAPK(BuildMode mode)
         {
 
-            if (!BDFrameEditorConfigHelper.EditorConfig.IsSetConfig())
+            if (!BDEditorApplication.BdFrameEditorSetting.IsSetConfig())
             {
                 BDebug.LogError("请注意设置apk keystore账号密码");
                 return;
             }
 
             var absroot = Application.dataPath.Replace("Assets", "");
-            PlayerSettings.Android.keystoreName =absroot  + BDFrameEditorConfigHelper.EditorConfig.Android.keystoreName;
-            PlayerSettings.keystorePass =  BDFrameEditorConfigHelper.EditorConfig.Android.keystorePass;
-            PlayerSettings.Android.keyaliasName= BDFrameEditorConfigHelper.EditorConfig.Android.keyaliasName;
-            PlayerSettings.keyaliasPass =  BDFrameEditorConfigHelper.EditorConfig.Android.keyaliasPass;
-            PlayerSettings.stripEngineCode = false;
+            PlayerSettings.Android.keystoreName =absroot  + BDEditorApplication.BdFrameEditorSetting.Android.keystoreName;
+            PlayerSettings.keystorePass =  BDEditorApplication.BdFrameEditorSetting.Android.keystorePass;
+            PlayerSettings.Android.keyaliasName= BDEditorApplication.BdFrameEditorSetting.Android.keyaliasName;
+            PlayerSettings.keyaliasPass =  BDEditorApplication.BdFrameEditorSetting.Android.keyaliasPass;
+            //具体安卓的配置
+            PlayerSettings.gcIncremental                    = true;
+            PlayerSettings.stripEngineCode                  = false;
+            PlayerSettings.Android.preferredInstallLocation = AndroidPreferredInstallLocation.Auto;
             //
             var outdir = BDApplication.ProjectRoot + "/Build";
             var outputPath = IPath.Combine(  outdir,  Application.productName+".apk");
@@ -165,7 +167,8 @@ namespace BDFramework.Editor
             BuildOptions opa = BuildOptions.None;
             if (mode == BuildMode.Debug)
             {
-                opa = BuildOptions.CompressWithLz4HC | BuildOptions.Development | BuildOptions.AllowDebugging;
+                opa = BuildOptions.CompressWithLz4HC | BuildOptions.Development | BuildOptions.AllowDebugging|
+                      BuildOptions.ConnectWithProfiler| BuildOptions.EnableDeepProfilingSupport;
             }
             else if(mode == BuildMode.Release)
             {
@@ -176,10 +179,10 @@ namespace BDFramework.Editor
             if (File.Exists(outputPath))
             {
                 Debug.Log( "Build Success :" + outputPath);
+                EditorUtility.RevealInFinder(outputPath);
             }
             else
             {
-
                 Debug.LogError(new Exception("Build Fail! Please Check the log! "));
             }
         }

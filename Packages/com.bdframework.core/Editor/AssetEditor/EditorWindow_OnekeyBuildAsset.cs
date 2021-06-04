@@ -6,8 +6,9 @@ using BDFramework.Editor.TableData;
 using BDFramework.Editor.Asset;
 using BDFramework.Core.Tools;
 using BDFramework.Editor;
+#if ODIN_INSPECTOR
 using Sirenix.Utilities.Editor;
-
+#endif
 namespace BDFramework.Editor.BuildPackage
 {
     public class EditorWindow_OnekeyBuildAsset : EditorWindow
@@ -39,6 +40,7 @@ namespace BDFramework.Editor.BuildPackage
         {
             GUILayout.BeginHorizontal();
             {
+#if ODIN_INSPECTOR
                 if (editorScript != null)
                 {
                     //GUILayout.BeginVertical();
@@ -65,6 +67,7 @@ namespace BDFramework.Editor.BuildPackage
                     SirenixEditorGUI.EndBox();
                     //Layout_DrawLineV(Color.white);
                 }
+#endif
             }
             GUILayout.EndHorizontal();
 
@@ -80,7 +83,7 @@ namespace BDFramework.Editor.BuildPackage
         private void OnDisable()
         {
             //保存
-            BDFrameEditorConfigHelper.EditorConfig.Save();
+            BDEditorApplication.BdFrameEditorSetting.Save();
         }
 
         public  string exportPath         = "";
@@ -161,7 +164,7 @@ namespace BDFramework.Editor.BuildPackage
             {
                 GUILayout.Label("CI相关测试");
                 
-                BDFrameEditorConfigHelper.EditorConfig.BuildAssetConfig.AssetBundleFileServerUrl = EditorGUILayout.TextField("文件服务器", BDFrameEditorConfigHelper.EditorConfig.BuildAssetConfig.AssetBundleFileServerUrl, GUILayout.Width(350));
+                BDEditorApplication.BdFrameEditorSetting.BuildAssetConfig.AssetBundleFileServerUrl = EditorGUILayout.TextField("文件服务器", BDEditorApplication.BdFrameEditorSetting.BuildAssetConfig.AssetBundleFileServerUrl, GUILayout.Width(350));
         
                 //构建资源
                 int Width = 100;
@@ -238,13 +241,12 @@ namespace BDFramework.Editor.BuildPackage
                 //1.搜集keywork
                 ShaderCollection.GenShaderVariant();
                 //2.打包模式
-                var config = BDFrameEditorConfigHelper.EditorConfig.BuildAssetConfig;
+                var config = BDEditorApplication.BdFrameEditorSetting.BuildAssetConfig;
                 AssetBundleEditorToolsV2.GenAssetBundle(outputPath, platform, target, BuildAssetBundleOptions.ChunkBasedCompression, config.IsUseHashName, config.AESCode);
             }
             catch (Exception e)
             {
                 Debug.LogError(e.Message);
-                return;
             }
 
             //2.编译脚本
@@ -255,13 +257,12 @@ namespace BDFramework.Editor.BuildPackage
             catch (Exception e)
             {
                 Debug.LogError(e.Message);
-                return;
             }
 
             //3.打包表格
             try
             {
-                Excel2SQLiteTools.ALLExcel2SQLite(outputPath, platform);
+                Excel2SQLiteTools.AllExcel2SQLite(outputPath, platform);
             }
             catch (Exception e)
             {

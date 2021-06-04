@@ -13,7 +13,6 @@ using Tool;
 using Debug = UnityEngine.Debug;
 using BDFramework.DataListener;
 using BDFramework.Editor;
-using BDFramework.Editor.EditorLife;
 using BDFramework.Core.Tools;
 using ILRuntime.Runtime.CLRBinding;
 using UnityEngine.UI;
@@ -64,8 +63,8 @@ public class EditorWindow_ScriptBuildDll : EditorWindow
                 StripCode.GenLinkXml();
             }
 
-            BDFrameEditorConfigHelper.EditorConfig.BuildAssetConfig.IsAutoBuildDll =
-                EditorGUILayout.Toggle("是否自动编译热更DLL",BDFrameEditorConfigHelper.EditorConfig.BuildAssetConfig.IsAutoBuildDll );
+            BDEditorApplication.BdFrameEditorSetting.BuildAssetConfig.IsAutoBuildDll =
+                EditorGUILayout.Toggle("是否自动编译热更DLL",BDEditorApplication.BdFrameEditorSetting.BuildAssetConfig.IsAutoBuildDll );
 
             GUI.color = Color.green;
             GUILayout.Label(@"
@@ -93,7 +92,7 @@ public class EditorWindow_ScriptBuildDll : EditorWindow
     static public void RoslynBuild(string outpath, RuntimePlatform platform, ScriptBuildTools.BuildMode mode,bool isShowTips =true)
     {
         //触发bd环境周期
-        BDFrameEditorBehaviorHelper.OnBeginBuildDLL();
+        BDEditorBehaviorHelper.OnBeginBuildDLL();
 
         var targetPath = "Assets/Code/BDFramework.Game/ILRuntime/Binding/Analysis";
         //1.分析之前先删除,然后生成临时文件防止报错
@@ -107,6 +106,10 @@ public class EditorWindow_ScriptBuildDll : EditorWindow
         {
             class CLRBindings
             {
+                internal static ILRuntime.Runtime.Enviorment.ValueTypeBinder<UnityEngine.Vector2> s_UnityEngine_Vector2_Binding_Binder = null;
+                internal static ILRuntime.Runtime.Enviorment.ValueTypeBinder<UnityEngine.Vector3> s_UnityEngine_Vector3_Binding_Binder = null;
+                internal static ILRuntime.Runtime.Enviorment.ValueTypeBinder<UnityEngine.Vector4> s_UnityEngine_Vector4_Binding_Binder = null;
+                internal static ILRuntime.Runtime.Enviorment.ValueTypeBinder<UnityEngine.Quaternion> s_UnityEngine_Quaternion_Binding_Binder = null;
                 public static void Initialize(ILRuntime.Runtime.Enviorment.AppDomain app)
                 {
                 }
@@ -124,7 +127,7 @@ public class EditorWindow_ScriptBuildDll : EditorWindow
         GenCLRBindingByAnalysis(platform, outpath);
         AssetDatabase.Refresh();
         //触发bd环境周期
-        BDFrameEditorBehaviorHelper.OnEndBuildDLL(outpath);
+        BDEditorBehaviorHelper.OnEndBuildDLL(outpath);
     }
 
     /// <summary>
@@ -156,7 +159,7 @@ public class EditorWindow_ScriptBuildDll : EditorWindow
     /// </summary>
     /// <param name="platform"></param>
     /// <param name="dllpath"></param>
-    static private void GenCLRBindingByAnalysis(RuntimePlatform platform = RuntimePlatform.Lumin, string dllpath = "")
+    static public void GenCLRBindingByAnalysis(RuntimePlatform platform = RuntimePlatform.Lumin, string dllpath = "")
     {
         //默认参数
         if (platform == RuntimePlatform.Lumin)
@@ -179,12 +182,16 @@ public class EditorWindow_ScriptBuildDll : EditorWindow
         var outputPath = "Assets/Code/BDFramework.Game/ILRuntime/Binding/Analysis";
         //游戏工程的Bind
         Action<bool> mainProjectIlrBindAction = null;
-        var type = BDFrameEditorLife.Types.FirstOrDefault((t) => t.FullName == "Game.ILRuntime.GameLogicILRBinding");
+        var type = BDFrameEditorLife.Types.FirstOrDefault((t) => t.FullName == "Game.ILRuntime.GameLogicCLRBinding");
         if (type != null)
         {
             var method = type.GetMethod("Bind", BindingFlags.Public | BindingFlags.Static);
             Delegate bindDelegate = Delegate.CreateDelegate(typeof(Action<bool>), null, method);
             mainProjectIlrBindAction = bindDelegate as Action<bool>;
+        }
+        else
+        {
+            Debug.LogError("Not find CLRBinding logic!!!");
         }
         //注册
         ILRuntimeHelper.LoadHotfix(dllpath, mainProjectIlrBindAction, false);
